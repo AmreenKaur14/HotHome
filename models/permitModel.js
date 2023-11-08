@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const permitSchema = mongoose.Schema({
+    currentID:{
+        type: mongoose.Schema.Types.ObjectId,
+        requires: true,
+        ref: 'users'
+    },
     builderID: {
         type: String,
         required: true

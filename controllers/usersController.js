@@ -2,6 +2,7 @@ const asyncHandler = require('express-async-handler');
 const bcrypt = require('bcrypt');
 const jsonwebtoken = require('jsonwebtoken');
 const User = require('../models/usersModel');
+const dotenv = require('dotenv').config();
 
 // RESIGTER ----
 const register = asyncHandler(async (req, res) => {
@@ -15,52 +16,60 @@ const register = asyncHandler(async (req, res) => {
     }
 
     // TO CONFIRM THAT USER EXISTS OR NOT .....
-    // const userAvaiable  =  await User.findOne({email});
-    // if(userAvaiable){
-    //     res.status(400);
-    // throw new Error("User already exits");
-    // }
+    const userAvaiable  =  await User.findOne({email});
+    if(userAvaiable){
+        res.status(400);
+    throw new Error("User already exits");
+    }
 
     // HASH PASSWORD...
     const hashpassword = await bcrypt.hash(password, 10);
-    console.log('NEW PASSWORD------- ', hashpassword);
+    console.log('NEW PASSWORD------- ', password);
 
-    res.json({ message: 'Registration Controller' })
+
+    const userRes = await User.create({
+        firstName, middleName, lastName, email, password: hashpassword, phoneNumber, address, securityAns
+    });
+    res.status(200).json(userRes);
+    // res.json({ message: 'Registration Controller' })
 });
 
 
 // LOGIN---
 const login = asyncHandler(async (req, res) => {
-
+    console.log('IN LOGIN------');
     const { email, password } = req.body;
 
     if (!email || !password) {
         res.status(400);
         throw new Error("All fields are mandatory! ")
     }
+    // console.log(process.env.ACCESS_TOKEN_SECRET);
 
     const userResult = await User.findOne({ email });
-    // COMPARE PASSWORD WITH PASSWORD....
-
     if (userResult && await bcrypt.compare(password, userResult.password)) {
+        // console.log('IN IF------',userResult);
+        // console.log(process.env.ACCESS_TOKEN_SECRET);
         const accessToken = jsonwebtoken.sign({
             user: {
                 email: userResult.email,
                 id: userResult.id,
             }
-        }, process.env.ACCESS_TOKEN_SECERT,
-            { expiresIn: "1m" }
+        }, process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: "10m" }
+            
         );
+        console.log('DECRYPTED THE PASSWORD-----',accessToken);
         res.json({ accessToken });
-    }else{
+    } else {
         res.status(401);
-        throw new Error("email or password does not mattch...")
+        throw new Error("email or password does not match...")
     }
-    res.json({ message: 'Login Controller' })
 });
 
+
 const current = asyncHandler(async (req, res) => {
-    res.json({ message: 'Registration Controller' })
+    res.json({ message: 'Current Controller' })
 });
 
 
